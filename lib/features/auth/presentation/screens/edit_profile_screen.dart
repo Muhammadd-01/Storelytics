@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:storelytics/features/auth/presentation/providers/auth_providers.dart';
+import 'dart:io' as io;
+import 'package:image_picker/image_picker.dart';
 import 'package:storelytics/core/validators.dart';
 import 'package:storelytics/theme/app_colors.dart';
+import 'package:storelytics/shared/services/storage_service.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
   const EditProfileScreen({super.key});
@@ -17,7 +20,19 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   late TextEditingController _nameController;
   late TextEditingController _emailController;
   late TextEditingController _phoneController;
+  XFile? _pickedImage;
   bool _isLoading = false;
+
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 70,
+    );
+    if (image != null) {
+      setState(() => _pickedImage = image);
+    }
+  }
 
   @override
   void initState() {
@@ -42,9 +57,18 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     setState(() => _isLoading = true);
     try {
       final repo = ref.read(authRepositoryProvider);
-      final currentUser = ref.read(currentUserProvider).value;
+      final storage = ref.read(storageServiceProvider);
+      var currentUser = ref.read(currentUserProvider).value;
 
       if (currentUser == null) return;
+
+      if (_pickedImage != null) {
+        final imageUrl = await storage.uploadProfileImage(
+          file: _pickedImage!,
+          userId: currentUser.uid,
+        );
+        currentUser = currentUser.copyWith(profileImageUrl: imageUrl);
+      }
 
       final updatedUser = currentUser.copyWith(
         name: _nameController.text.trim(),
@@ -135,6 +159,82 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const SizedBox(height: 20),
+                    Center(
+                      child: Stack(
+                        children: [
+                          GestureDetector(
+                            onTap: _pickImage,
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.2),
+                                  width: 2,
+                                ),
+                              ),
+                              child: CircleAvatar(
+                                radius: 50,
+                                backgroundColor: Colors.white.withValues(
+                                  alpha: 0.1,
+                                ),
+                                backgroundImage:
+                                    _pickedImage != null
+                                        ? FileImage(io.File(_pickedImage!.path))
+                                        : (ref
+                                                        .read(
+                                                          currentUserProvider,
+                                                        )
+                                                        .value
+                                                        ?.profileImageUrl !=
+                                                    null
+                                                ? NetworkImage(
+                                                  ref
+                                                      .read(currentUserProvider)
+                                                      .value!
+                                                      .profileImageUrl!,
+                                                )
+                                                : null)
+                                            as ImageProvider?,
+                                child:
+                                    _pickedImage == null &&
+                                            ref
+                                                    .read(currentUserProvider)
+                                                    .value
+                                                    ?.profileImageUrl ==
+                                                null
+                                        ? const Icon(
+                                          Icons.person,
+                                          size: 50,
+                                          color: Colors.white54,
+                                        )
+                                        : null,
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: GestureDetector(
+                              onTap: _pickImage,
+                              child: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: const BoxDecoration(
+                                  color: AppColors.secondary,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.camera_alt_rounded,
+                                  size: 20,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 32),
                     _buildSectionHeader('YOUR DETAILS'),
                     const SizedBox(height: 16),
 

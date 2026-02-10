@@ -1,81 +1,17 @@
-import 'dart:io' as io;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:storelytics/features/auth/presentation/providers/auth_providers.dart';
 import 'package:storelytics/features/auth/data/models/user_model.dart';
 import 'package:storelytics/core/enums.dart';
-import 'package:storelytics/shared/services/storage_service.dart';
 import 'package:storelytics/theme/app_colors.dart';
 import 'package:storelytics/shared/widgets/common_widgets.dart';
 
-class ProfileScreen extends ConsumerStatefulWidget {
+class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
   @override
-  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
-}
-
-class _ProfileScreenState extends ConsumerState<ProfileScreen> {
-  XFile? _pickedImage;
-  bool _isUploading = false;
-
-  Future<void> _pickImage() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 70,
-    );
-    if (image != null) {
-      setState(() => _pickedImage = image);
-    }
-  }
-
-  Future<void> _handleSave(UserModel user) async {
-    if (_pickedImage == null) return;
-
-    setState(() => _isUploading = true);
-    try {
-      final storage = ref.read(storageServiceProvider);
-      final repo = ref.read(authRepositoryProvider);
-
-      final imageUrl = await storage.uploadProfileImage(
-        file: _pickedImage!,
-        userId: user.uid,
-      );
-
-      final updatedUser = user.copyWith(profileImageUrl: imageUrl);
-      await repo.updateUser(updatedUser);
-      ref.invalidate(currentUserProvider);
-
-      setState(() => _pickedImage = null);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Identity parameters synchronized'),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Sync failed: ${e.toString()}'),
-            backgroundColor: AppColors.loss,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isUploading = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final userAsync = ref.watch(currentUserProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -211,22 +147,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
                       const SizedBox(height: 48),
 
-                      if (_pickedImage != null) ...[
-                        _ActionButton(
-                          onPressed:
-                              _isUploading ? () {} : () => _handleSave(user),
-                          icon: Icons.save_rounded,
-                          label: _isUploading ? 'SAVING...' : 'SAVE CHANGES',
-                          isPrimary: true,
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-
                       _ActionButton(
                         onPressed: () => context.push('/edit-profile'),
                         icon: Icons.edit_note_rounded,
                         label: 'UPDATE INFO',
-                        isPrimary: _pickedImage == null,
+                        isPrimary: true,
                       ),
                       const SizedBox(height: 12),
 
@@ -235,7 +160,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           onPressed: () => context.push('/admin'),
                           icon: Icons.admin_panel_settings_rounded,
                           label: 'ADMIN CONSOLE',
-                          isPrimary: _pickedImage == null,
+                          isPrimary: false,
                         ),
                         const SizedBox(height: 12),
                       ],
@@ -276,54 +201,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             backgroundColor:
                 isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9),
             backgroundImage:
-                _pickedImage != null
-                    ? FileImage(io.File(_pickedImage!.path))
-                    : (user.profileImageUrl != null
-                            ? NetworkImage(user.profileImageUrl!)
-                            : null)
-                        as ImageProvider?,
+                (user.profileImageUrl != null
+                        ? NetworkImage(user.profileImageUrl!)
+                        : null)
+                    as ImageProvider?,
             child:
-                user.profileImageUrl == null && _pickedImage == null
+                user.profileImageUrl == null
                     ? Icon(
                       Icons.person_rounded,
                       size: 60,
                       color: Colors.white.withValues(alpha: 0.5),
                     )
                     : null,
-          ),
-        ),
-        if (_isUploading)
-          Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.4),
-                shape: BoxShape.circle,
-              ),
-              child: const Center(
-                child: CircularProgressIndicator(
-                  color: Colors.white,
-                  strokeWidth: 2,
-                ),
-              ),
-            ),
-          ),
-        Positioned(
-          bottom: 2,
-          right: 2,
-          child: GestureDetector(
-            onTap: _isUploading ? null : _pickImage,
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.publish_rounded,
-                size: 18,
-                color: AppColors.secondary,
-              ),
-            ),
           ),
         ),
       ],
@@ -392,27 +281,30 @@ class _ParameterCard extends StatelessWidget {
             child: Icon(icon, color: AppColors.secondary, size: 20),
           ),
           const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.grey,
-                  letterSpacing: 0.5,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.grey,
+                    letterSpacing: 0.5,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
