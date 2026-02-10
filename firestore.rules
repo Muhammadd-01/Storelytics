@@ -1,0 +1,69 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ── Helper Functions ──
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    function isAdmin() {
+      return isSignedIn() && getUserData().role == 'admin';
+    }
+    function isStoreOwner(storeId) {
+      return isSignedIn() && getUserData().storeId == storeId;
+    }
+    // ── Users Collection ──
+    match /users/{userId} {
+      // Users can read their own profile, admins can read all
+      allow read: if isOwner(userId) || isAdmin();
+      // Users can create their own profile
+      allow create: if isOwner(userId);
+      // Users can update their own profile (except role), admins can update anyone
+      allow update: if (isOwner(userId) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role'])) || isAdmin();
+      // Only admins can delete
+      allow delete: if isAdmin();
+    }
+    // ── Stores Collection ──
+    match /stores/{storeId} {
+      // Store owners and admins can read
+      allow read: if isStoreOwner(storeId) || isAdmin();
+      // Signed-in users can create a store
+      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
+      // Only store owners and admins can update
+      allow update: if isStoreOwner(storeId) || isAdmin();
+      // Only admins can delete
+      allow delete: if isAdmin();
+    }
+    // ── Inventory Collection ──
+    match /inventory/{itemId} {
+      allow read: if isSignedIn() && (isStoreOwner(resource.data.storeId) || isAdmin());
+      allow create: if isSignedIn() && isStoreOwner(request.resource.data.storeId);
+      allow update: if isSignedIn() && isStoreOwner(resource.data.storeId);
+      allow delete: if isSignedIn() && (isStoreOwner(resource.data.storeId) || isAdmin());
+    }
+    // ── Sales Collection ──
+    match /sales/{saleId} {
+      allow read: if isSignedIn() && (isStoreOwner(resource.data.storeId) || isAdmin());
+      allow create: if isSignedIn() && isStoreOwner(request.resource.data.storeId);
+      // Sales records are immutable — no update/delete (audit trail)
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+    // ── Demand Collection ──
+    match /demand_logs/{demandId} {
+      allow read: if isSignedIn() && (isStoreOwner(resource.data.storeId) || isAdmin());
+      allow create: if isSignedIn() && isStoreOwner(request.resource.data.storeId);
+      allow update: if isSignedIn() && isStoreOwner(resource.data.storeId);
+      allow delete: if isSignedIn() && (isStoreOwner(resource.data.storeId) || isAdmin());
+    }
+    // ── Deny everything else ──
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

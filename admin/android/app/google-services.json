@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "915843536549",
+    "project_id": "storelytics-644ae",
+    "storage_bucket": "storelytics-644ae.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:915843536549:android:61b22c7393a71b9d3b1f4c",
+        "android_client_info": {
+          "package_name": "com.storelytics.storelytics"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAANWdKHyv9nkumTq6RDHzdVsA_wtc-2nY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:915843536549:android:5fc5365f710bd5c73b1f4c",
+        "android_client_info": {
+          "package_name": "com.storelytics.storelytics_admin"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAANWdKHyv9nkumTq6RDHzdVsA_wtc-2nY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

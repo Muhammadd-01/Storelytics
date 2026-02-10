@@ -1,0 +1,63 @@
+name: storelytics
+description: "Storelytics - Retail Analytics & Inventory Intelligence System"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.7.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Firebase
+  firebase_core: ^3.12.1
+  firebase_auth: ^5.5.1
+  cloud_firestore: ^5.6.5
+  firebase_storage: ^12.4.4
+
+  # State Management
+  flutter_riverpod: ^2.6.1
+
+  # Routing
+  go_router: ^14.8.1
+
+  # Data Models
+  freezed_annotation: ^2.4.4
+  json_annotation: ^4.9.0
+
+  # Charts
+  fl_chart: ^0.70.2
+
+  # PDF
+  pdf: ^3.11.2
+  printing: ^5.14.2
+
+  # Utilities
+  intl: ^0.20.2
+  uuid: ^4.5.1
+  share_plus: ^10.1.4
+  path_provider: ^2.1.5
+
+  # UI
+  cupertino_icons: ^1.0.8
+  google_fonts: ^6.2.1
+  shimmer: ^3.0.0
+  cached_network_image: ^3.4.1
+  image_picker: ^1.1.2
+
+  # Supabase
+  supabase_flutter: ^2.8.3
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  freezed: ^2.5.7
+  json_serializable: ^6.9.4
+  build_runner: ^2.4.14
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
