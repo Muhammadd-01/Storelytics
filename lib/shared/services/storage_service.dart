@@ -24,12 +24,26 @@ class StorageService {
       // Read as bytes for cross-platform support (Web/Windows/Mobile)
       final bytes = await file.readAsBytes();
 
+      // Determine content type from extension (vital for web)
+      final ext = path.extension(fileName).toLowerCase().replaceAll('.', '');
+      final contentType = switch (ext) {
+        'jpg' || 'jpeg' => 'image/jpeg',
+        'png' => 'image/png',
+        'webp' => 'image/webp',
+        'pdf' => 'application/pdf',
+        _ => 'application/octet-stream',
+      };
+
       await _supabase.storage
           .from(bucketName)
           .uploadBinary(
             filePath,
             bytes,
-            fileOptions: const FileOptions(cacheControl: '3600', upsert: false),
+            fileOptions: FileOptions(
+              cacheControl: '3600',
+              upsert: false,
+              contentType: contentType,
+            ),
           );
 
       final String publicUrl = _supabase.storage

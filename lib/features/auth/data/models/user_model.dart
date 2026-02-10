@@ -9,6 +9,7 @@ class UserModel {
   final UserRole role;
   final String? storeId;
   final String? profileImageUrl;
+  final String? phoneNumber;
   final SubscriptionPlan subscriptionPlan;
   final bool isActive;
   final DateTime createdAt;
@@ -20,6 +21,7 @@ class UserModel {
     required this.role,
     this.storeId,
     this.profileImageUrl,
+    this.phoneNumber,
     this.subscriptionPlan = SubscriptionPlan.free,
     this.isActive = true,
     required this.createdAt,
@@ -32,6 +34,7 @@ class UserModel {
     UserRole? role,
     String? storeId,
     String? profileImageUrl,
+    String? phoneNumber,
     SubscriptionPlan? subscriptionPlan,
     bool? isActive,
     DateTime? createdAt,
@@ -43,6 +46,7 @@ class UserModel {
       role: role ?? this.role,
       storeId: storeId ?? this.storeId,
       profileImageUrl: profileImageUrl ?? this.profileImageUrl,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
       subscriptionPlan: subscriptionPlan ?? this.subscriptionPlan,
       isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
@@ -57,6 +61,7 @@ class UserModel {
       'role': role.name,
       'storeId': storeId,
       'profileImageUrl': profileImageUrl,
+      'phoneNumber': phoneNumber,
       'subscriptionPlan': subscriptionPlan.name,
       'isActive': isActive,
       'createdAt': Timestamp.fromDate(createdAt),
@@ -74,6 +79,7 @@ class UserModel {
       ),
       storeId: map['storeId'] as String?,
       profileImageUrl: map['profileImageUrl'] as String?,
+      phoneNumber: map['phoneNumber'] as String?,
       subscriptionPlan: SubscriptionPlan.values.firstWhere(
         (e) => e.name == map['subscriptionPlan'],
         orElse: () => SubscriptionPlan.free,

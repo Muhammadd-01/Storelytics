@@ -40,6 +40,7 @@ class DemandListScreen extends ConsumerWidget {
             ),
             title: const Text('Demand Log'),
           ),
+          floatingActionButtonLocation: const RaisedFabLocation(),
           floatingActionButton: FloatingActionButton.extended(
             onPressed: () => _showAddDemandDialog(context, ref, user.storeId!),
             backgroundColor: AppColors.secondary,
@@ -61,7 +62,12 @@ class DemandListScreen extends ConsumerWidget {
               }
 
               return ListView.builder(
-                padding: const EdgeInsets.all(AppSpacing.md),
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.md,
+                  AppSpacing.md,
+                  AppSpacing.md,
+                  150,
+                ),
                 itemCount: demands.length,
                 itemBuilder: (context, index) {
                   final demand = demands[index];

@@ -16,6 +16,7 @@ import 'package:storelytics/features/reports/presentation/screens/reports_screen
 import 'package:storelytics/features/sales/presentation/screens/record_sale_screen.dart';
 import 'package:storelytics/features/sales/presentation/screens/sales_history_screen.dart';
 import 'package:storelytics/features/auth/presentation/screens/profile_screen.dart';
+import 'package:storelytics/features/auth/presentation/screens/edit_profile_screen.dart';
 import 'package:storelytics/features/settings/presentation/screens/settings_screen.dart';
 import 'package:storelytics/features/store/presentation/screens/store_setup_screen.dart';
 import 'package:storelytics/features/admin/presentation/screens/admin_dashboard_screen.dart';
@@ -164,6 +165,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (_, __) => const RecordSaleScreen(),
       ),
       GoRoute(path: '/admin', builder: (_, __) => const AdminDashboardScreen()),
+      GoRoute(
+        path: '/edit-profile',
+        builder: (_, __) => const EditProfileScreen(),
+      ),
     ],
     errorBuilder:
         (context, state) => Scaffold(

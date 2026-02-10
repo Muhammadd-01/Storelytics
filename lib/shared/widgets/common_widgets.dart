@@ -151,3 +151,18 @@ class EmptyStateWidget extends StatelessWidget {
     );
   }
 }
+
+/// Custom FAB location to lift it above the floating bottom navbar.
+class RaisedFabLocation extends FloatingActionButtonLocation {
+  final double offset;
+  const RaisedFabLocation({this.offset = 120});
+
+  @override
+  Offset getOffset(ScaffoldPrelayoutGeometry scaffoldGeometry) {
+    // Standard endFloat offset
+    final Offset standardOffset = FloatingActionButtonLocation.endFloat
+        .getOffset(scaffoldGeometry);
+    // Lift it up by the specified offset to clear the floating navbar
+    return Offset(standardOffset.dx, standardOffset.dy - offset);
+  }
+}

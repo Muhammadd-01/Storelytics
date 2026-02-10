@@ -71,10 +71,11 @@ class AdminDashboardScreen extends ConsumerWidget {
             ),
             const SizedBox(width: 8),
             const Text(
-              'Admin Console',
+              'ADMIN PANEL',
               style: TextStyle(
                 color: Colors.white,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1,
               ),
             ),
           ],

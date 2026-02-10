@@ -129,20 +129,16 @@ class DashboardScreen extends ConsumerWidget {
             'assets/images/logo.png',
             height: 24,
             errorBuilder:
-                (_, __, ___) => const Text(
-                  'INTELLIGENCE HUB',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 13,
-                    letterSpacing: 1.5,
-                  ),
+                (_, __, ___) => const Icon(
+                  Icons.analytics_rounded,
+                  color: Colors.white,
+                  size: 24,
                 ),
           ),
           storeAsync.maybeWhen(
             data:
                 (store) => Text(
-                  store?.storeName.toUpperCase() ?? 'UNLINKED STORE',
+                  store?.storeName.toUpperCase() ?? 'MY STORE',
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:storelytics/theme/app_colors.dart';
+import 'package:storelytics/shared/widgets/common_widgets.dart';
 
 class MainShell extends StatelessWidget {
   final Widget child;
@@ -58,7 +59,7 @@ class MainShell extends StatelessWidget {
       extendBody: true,
       body: child,
       floatingActionButtonLocation:
-          const _RaisedFabLocation(), // Lift FAB above navbar
+          const RaisedFabLocation(), // Lift FAB above navbar
       bottomNavigationBar: Container(
         margin: const EdgeInsets.fromLTRB(20, 0, 20, 20),
         height: 70,
@@ -131,17 +132,4 @@ class _TabItem {
   final IconData icon;
   final String label;
   const _TabItem({required this.icon, required this.label});
-}
-
-class _RaisedFabLocation extends FloatingActionButtonLocation {
-  const _RaisedFabLocation();
-
-  @override
-  Offset getOffset(ScaffoldPrelayoutGeometry scaffoldGeometry) {
-    // Standard endFloat offset
-    final Offset standardOffset = FloatingActionButtonLocation.endFloat
-        .getOffset(scaffoldGeometry);
-    // Lift it up by 100 pixels to clear the floating navbar
-    return Offset(standardOffset.dx, standardOffset.dy - 100);
-  }
 }

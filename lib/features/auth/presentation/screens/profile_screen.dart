@@ -197,14 +197,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       // Account Parameters
                       _ParameterCard(
                         icon: Icons.fingerprint_rounded,
-                        label: 'STORE REGISTRY ID',
-                        value: user.storeId ?? 'UNLINKED',
+                        label: 'STORE ID',
+                        value: user.storeId ?? 'NOT LINKED',
                         isDark: isDark,
                       ),
                       const SizedBox(height: 12),
                       _ParameterCard(
                         icon: Icons.workspace_premium_rounded,
-                        label: 'TIER ACCESS',
+                        label: 'MEMBERSHIP',
                         value: user.subscriptionPlan.label.toUpperCase(),
                         isDark: isDark,
                       ),
@@ -216,14 +216,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           onPressed:
                               _isUploading ? () {} : () => _handleSave(user),
                           icon: Icons.save_rounded,
-                          label:
-                              _isUploading
-                                  ? 'SYNCHRONIZING...'
-                                  : 'SAVE CHANGES',
+                          label: _isUploading ? 'SAVING...' : 'SAVE CHANGES',
                           isPrimary: true,
                         ),
                         const SizedBox(height: 12),
                       ],
+
+                      _ActionButton(
+                        onPressed: () => context.push('/edit-profile'),
+                        icon: Icons.edit_note_rounded,
+                        label: 'UPDATE INFO',
+                        isPrimary: _pickedImage == null,
+                      ),
+                      const SizedBox(height: 12),
 
                       if (user.role == UserRole.admin) ...[
                         _ActionButton(
@@ -241,11 +246,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           if (context.mounted) context.go('/login');
                         },
                         icon: Icons.power_settings_new_rounded,
-                        label: 'TERMINATE SESSION',
+                        label: 'LOGOUT',
                         isDangerous: true,
                       ),
 
-                      const SizedBox(height: 120), // Navbar Clearance
+                      const SizedBox(height: 150), // Navbar Clearance
                     ],
                   ),
                 ),

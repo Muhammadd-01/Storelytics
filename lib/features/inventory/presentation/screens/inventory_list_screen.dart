@@ -77,6 +77,7 @@ class InventoryListScreen extends ConsumerWidget {
               const SizedBox(width: 8),
             ],
           ),
+          floatingActionButtonLocation: const RaisedFabLocation(),
           floatingActionButton: FloatingActionButton.extended(
             onPressed: () => context.push('/inventory/add'),
             backgroundColor: AppColors.secondary,
@@ -134,7 +135,7 @@ class InventoryListScreen extends ConsumerWidget {
                             20,
                             10,
                             20,
-                            120,
+                            150,
                           ), // Increased bottom padding
                           itemCount: filtered.length,
                           separatorBuilder:

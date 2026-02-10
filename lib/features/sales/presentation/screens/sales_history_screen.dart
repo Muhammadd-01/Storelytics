@@ -53,6 +53,7 @@ class SalesHistoryScreen extends ConsumerWidget {
               ),
             ),
           ),
+          floatingActionButtonLocation: const RaisedFabLocation(),
           floatingActionButton: FloatingActionButton(
             onPressed: () => context.push('/sales/record'),
             backgroundColor: AppColors.secondary,
@@ -91,7 +92,7 @@ class SalesHistoryScreen extends ConsumerWidget {
                             20,
                             10,
                             20,
-                            120,
+                            150,
                           ), // Increased bottom padding
                           itemCount: sales.length,
                           separatorBuilder:

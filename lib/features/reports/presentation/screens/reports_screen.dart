@@ -28,8 +28,13 @@ class ReportsScreen extends ConsumerWidget {
         ),
         title: const Text('Reports'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.md,
+          AppSpacing.md,
+          AppSpacing.md,
+          150,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

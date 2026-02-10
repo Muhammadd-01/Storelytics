@@ -173,7 +173,7 @@ class _RecordSaleScreenState extends ConsumerState<RecordSaleScreen> {
                 ),
                 const SizedBox(height: 32),
 
-                _buildSectionHeader('QUANTITY SOLD'),
+                _buildSectionHeader('ITEM COUNT'),
                 const SizedBox(height: 12),
                 _buildQuantityPicker(isDark),
 
@@ -182,8 +182,8 @@ class _RecordSaleScreenState extends ConsumerState<RecordSaleScreen> {
                 if (_selectedItem != null) _buildSummaryCard(isDark),
 
                 const SizedBox(height: 48),
-                _buildConfirmButton(),
-                const SizedBox(height: 120),
+                _buildRecordButton(),
+                const SizedBox(height: 150),
               ],
             ),
           );
@@ -314,7 +314,7 @@ class _RecordSaleScreenState extends ConsumerState<RecordSaleScreen> {
     );
   }
 
-  Widget _buildConfirmButton() {
+  Widget _buildRecordButton() {
     return SizedBox(
       height: 60,
       child: ElevatedButton(
@@ -330,7 +330,7 @@ class _RecordSaleScreenState extends ConsumerState<RecordSaleScreen> {
             _isLoading
                 ? const CircularProgressIndicator(color: Colors.white)
                 : const Text(
-                  'COMPLETE TRANSACTION',
+                  'RECORD SALE',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w800,
