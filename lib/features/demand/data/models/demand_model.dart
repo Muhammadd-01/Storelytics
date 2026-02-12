@@ -40,6 +40,7 @@ class DemandModel {
     return {
       'demandId': demandId,
       'storeId': storeId,
+      'currentStoreId': storeId, // Added for compatibility
       'itemName': itemName,
       'timesRequested': timesRequested,
       'date': Timestamp.fromDate(date),
@@ -50,7 +51,7 @@ class DemandModel {
   factory DemandModel.fromMap(Map<String, dynamic> map) {
     return DemandModel(
       demandId: map['demandId'] as String,
-      storeId: map['storeId'] as String,
+      storeId: (map['storeId'] ?? map['currentStoreId']) as String,
       itemName: map['itemName'] as String,
       timesRequested: map['timesRequested'] as int,
       date: (map['date'] as Timestamp).toDate(),

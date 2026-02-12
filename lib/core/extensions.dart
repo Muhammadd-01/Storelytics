@@ -35,6 +35,17 @@ extension DateTimeX on DateTime {
 
   DateTime get startOfDay => DateTime(year, month, day);
   DateTime get endOfDay => DateTime(year, month, day, 23, 59, 59);
+
+  String get timeAgo {
+    final now = DateTime.now();
+    final difference = now.difference(this);
+
+    if (difference.inSeconds < 60) return 'Just now';
+    if (difference.inMinutes < 60) return '${difference.inMinutes}m ago';
+    if (difference.inHours < 24) return '${difference.inHours}h ago';
+    if (difference.inDays < 7) return '${difference.inDays}d ago';
+    return formatted;
+  }
 }
 
 extension DoubleX on double {

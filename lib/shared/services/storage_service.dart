@@ -95,4 +95,16 @@ class StorageService {
       pathPrefix: 'users/$userId',
     );
   }
+
+  /// Specialized method for uploading barcode images.
+  Future<String> uploadBarcodeImage({
+    required XFile file,
+    required String storeId,
+  }) async {
+    return uploadFile(
+      file: file,
+      bucketName: 'barcodes',
+      pathPrefix: 'stores/$storeId',
+    );
+  }
 }

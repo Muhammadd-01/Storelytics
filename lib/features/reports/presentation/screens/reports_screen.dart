@@ -101,9 +101,11 @@ class ReportsScreen extends ConsumerWidget {
   Future<void> _generateSalesReport(BuildContext context, WidgetRef ref) async {
     try {
       final user = await ref.read(currentUserProvider.future);
-      if (user == null || user.storeId == null) return;
+      if (user == null || user.currentStoreId == null) return;
       final store = await ref.read(currentStoreProvider.future);
-      final sales = await ref.read(monthlySalesProvider(user.storeId!).future);
+      final sales = await ref.read(
+        monthlySalesProvider(user.currentStoreId!).future,
+      );
 
       final totalRevenue = sales.fold(0.0, (s, e) => s + e.revenue);
       final totalCost = sales.fold(0.0, (s, e) => s + e.cost);
@@ -180,9 +182,11 @@ class ReportsScreen extends ConsumerWidget {
   ) async {
     try {
       final user = await ref.read(currentUserProvider.future);
-      if (user == null || user.storeId == null) return;
+      if (user == null || user.currentStoreId == null) return;
       final store = await ref.read(currentStoreProvider.future);
-      final sales = await ref.read(monthlySalesProvider(user.storeId!).future);
+      final sales = await ref.read(
+        monthlySalesProvider(user.currentStoreId!).future,
+      );
 
       // Group by item for profit breakdown
       final Map<String, Map<String, dynamic>> byItem = {};
@@ -283,9 +287,11 @@ class ReportsScreen extends ConsumerWidget {
   ) async {
     try {
       final user = await ref.read(currentUserProvider.future);
-      if (user == null || user.storeId == null) return;
+      if (user == null || user.currentStoreId == null) return;
       final store = await ref.read(currentStoreProvider.future);
-      final items = await ref.read(inventoryListProvider(user.storeId!).future);
+      final items = await ref.read(
+        inventoryListProvider(user.currentStoreId!).future,
+      );
 
       final totalValue = items.fold(
         0.0,
@@ -379,9 +385,11 @@ class ReportsScreen extends ConsumerWidget {
   ) async {
     try {
       final user = await ref.read(currentUserProvider.future);
-      if (user == null || user.storeId == null) return;
+      if (user == null || user.currentStoreId == null) return;
       final store = await ref.read(currentStoreProvider.future);
-      final demands = await ref.read(topDemandsProvider(user.storeId!).future);
+      final demands = await ref.read(
+        topDemandsProvider(user.currentStoreId!).future,
+      );
 
       final pdf = pw.Document();
       pdf.addPage(

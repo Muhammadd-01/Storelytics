@@ -56,10 +56,11 @@ class AuthRepository {
       password: password,
     );
 
-    final doc = await _firestore
-        .collection(AppConstants.usersCollection)
-        .doc(credential.user!.uid)
-        .get();
+    final doc =
+        await _firestore
+            .collection(AppConstants.usersCollection)
+            .doc(credential.user!.uid)
+            .get();
 
     if (!doc.exists) {
       throw Exception('User data not found');
@@ -88,21 +89,53 @@ class AuthRepository {
     final user = _auth.currentUser;
     if (user == null) return null;
 
-    final doc = await _firestore
-        .collection(AppConstants.usersCollection)
-        .doc(user.uid)
-        .get();
+    final doc =
+        await _firestore
+            .collection(AppConstants.usersCollection)
+            .doc(user.uid)
+            .get();
 
     if (!doc.exists) return null;
-    return UserModel.fromMap(doc.data()!);
+    final data = doc.data()!;
+    final model = UserModel.fromMap(data);
+
+    // Auto-repair missing fields for security rules compatibility
+    final currentId = data['currentStoreId'] ?? data['storeId'];
+    if (currentId != null) {
+      final updates = <String, dynamic>{};
+      if (data['storeId'] != currentId) updates['storeId'] = currentId;
+      if (data['currentStoreId'] != currentId)
+        updates['currentStoreId'] = currentId;
+
+      // Ensure storeIds is not empty if we have a current store
+      final List<dynamic> storeIds = data['storeIds'] ?? [];
+      if (storeIds.isEmpty) {
+        updates['storeIds'] = [currentId];
+      }
+
+      if (updates.isNotEmpty) {
+        await _firestore
+            .collection(AppConstants.usersCollection)
+            .doc(user.uid)
+            .update(updates);
+      }
+    }
+
+    return model;
   }
 
   /// Update user document.
   Future<void> updateUser(UserModel user) async {
+    final data = user.toMap();
+    // Ensure storeId is synced with currentStoreId for security rules compatibility
+    if (data['currentStoreId'] != null) {
+      data['storeId'] = data['currentStoreId'];
+    }
+
     await _firestore
         .collection(AppConstants.usersCollection)
         .doc(user.uid)
-        .update(user.toMap());
+        .update(data);
   }
 
   /// Stream user model.

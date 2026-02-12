@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
+import 'package:storelytics/shared/widgets/barcode_scanner_screen.dart';
 import 'package:storelytics/core/extensions.dart';
 import 'package:storelytics/features/auth/presentation/providers/auth_providers.dart';
 import 'package:storelytics/features/inventory/data/models/inventory_item_model.dart';
@@ -56,7 +57,7 @@ class _RecordSaleScreenState extends ConsumerState<RecordSaleScreen> {
       final user = await ref.read(currentUserProvider.future);
       final sale = SaleModel(
         saleId: const Uuid().v4(),
-        storeId: user!.storeId!,
+        storeId: user!.currentStoreId!,
         itemId: _selectedItem!.itemId,
         itemName: _selectedItem!.name,
         quantity: qty,
@@ -68,9 +69,9 @@ class _RecordSaleScreenState extends ConsumerState<RecordSaleScreen> {
       );
 
       await ref.read(salesRepositoryProvider).recordSale(sale);
-      ref.invalidate(todaySalesProvider(user.storeId!));
-      ref.invalidate(todayRevenueProvider(user.storeId!));
-      ref.invalidate(todayProfitProvider(user.storeId!));
+      ref.invalidate(todaySalesProvider(user.currentStoreId!));
+      ref.invalidate(todayRevenueProvider(user.currentStoreId!));
+      ref.invalidate(todayProfitProvider(user.currentStoreId!));
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -85,6 +86,30 @@ class _RecordSaleScreenState extends ConsumerState<RecordSaleScreen> {
       _showError(e.toString());
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _scanBarcode() async {
+    final code = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(builder: (context) => const BarcodeScannerScreen()),
+    );
+
+    if (code != null) {
+      final user = ref.read(currentUserProvider).value;
+      if (user?.currentStoreId == null) return;
+
+      final items =
+          ref.read(inventoryListProvider(user!.currentStoreId!)).value;
+      if (items != null) {
+        final item = items.where((i) => i.barcode == code).firstOrNull;
+
+        if (item != null) {
+          setState(() => _selectedItem = item);
+        } else {
+          _showError('Item with barcode $code not found in inventory');
+        }
+      }
     }
   }
 
@@ -108,21 +133,35 @@ class _RecordSaleScreenState extends ConsumerState<RecordSaleScreen> {
         loading: () => const AppLoadingWidget(),
         error: (e, _) => AppErrorWidget(message: e.toString()),
         data: (user) {
-          if (user == null || user.storeId == null) {
+          if (user == null || user.currentStoreId == null) {
             return const EmptyStateWidget(
               icon: Icons.store,
               title: 'No store configured',
             );
           }
 
-          final itemsAsync = ref.watch(inventoryListProvider(user.storeId!));
+          final itemsAsync = ref.watch(
+            inventoryListProvider(user.currentStoreId!),
+          );
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _buildSectionHeader('SELECT PRODUCT'),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildSectionHeader('SELECT PRODUCT'),
+                    IconButton(
+                      icon: const Icon(
+                        Icons.qr_code_scanner_rounded,
+                        color: AppColors.secondary,
+                      ),
+                      onPressed: _scanBarcode,
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 12),
                 itemsAsync.when(
                   loading: () => const LinearProgressIndicator(),

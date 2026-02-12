@@ -59,6 +59,7 @@ class SaleModel {
     return {
       'saleId': saleId,
       'storeId': storeId,
+      'currentStoreId': storeId, // Added for compatibility
       'itemId': itemId,
       'itemName': itemName,
       'quantity': quantity,
@@ -73,7 +74,7 @@ class SaleModel {
   factory SaleModel.fromMap(Map<String, dynamic> map) {
     return SaleModel(
       saleId: map['saleId'] as String,
-      storeId: map['storeId'] as String,
+      storeId: (map['storeId'] ?? map['currentStoreId']) as String,
       itemId: map['itemId'] as String,
       itemName: map['itemName'] as String? ?? '',
       quantity: map['quantity'] as int,

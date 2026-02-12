@@ -30,9 +30,10 @@ class InventoryRepository {
         .orderBy('name')
         .snapshots()
         .map(
-          (snapshot) => snapshot.docs
-              .map((d) => InventoryItem.fromMap(d.data()))
-              .toList(),
+          (snapshot) =>
+              snapshot.docs
+                  .map((d) => InventoryItem.fromMap(d.data()))
+                  .toList(),
         );
   }
 
@@ -47,17 +48,17 @@ class InventoryRepository {
         .orderBy('name')
         .snapshots()
         .map(
-          (snapshot) => snapshot.docs
-              .map((d) => InventoryItem.fromMap(d.data()))
-              .toList(),
+          (snapshot) =>
+              snapshot.docs
+                  .map((d) => InventoryItem.fromMap(d.data()))
+                  .toList(),
         );
   }
 
   /// Get low stock items.
   Future<List<InventoryItem>> getLowStockItems(String storeId) async {
-    final snapshot = await _collection
-        .where('storeId', isEqualTo: storeId)
-        .get();
+    final snapshot =
+        await _collection.where('storeId', isEqualTo: storeId).get();
 
     return snapshot.docs
         .map((d) => InventoryItem.fromMap(d.data()))
@@ -70,11 +71,15 @@ class InventoryRepository {
     final now = DateTime.now();
     final threshold = now.add(const Duration(days: 30));
 
-    final snapshot = await _collection
-        .where('storeId', isEqualTo: storeId)
-        .where('expiryDate', isLessThanOrEqualTo: Timestamp.fromDate(threshold))
-        .where('expiryDate', isGreaterThan: Timestamp.fromDate(now))
-        .get();
+    final snapshot =
+        await _collection
+            .where('storeId', isEqualTo: storeId)
+            .where(
+              'expiryDate',
+              isLessThanOrEqualTo: Timestamp.fromDate(threshold),
+            )
+            .where('expiryDate', isGreaterThan: Timestamp.fromDate(now))
+            .get();
 
     return snapshot.docs.map((d) => InventoryItem.fromMap(d.data())).toList();
   }
@@ -95,18 +100,15 @@ class InventoryRepository {
 
   /// Get item count for a store.
   Future<int> getItemCount(String storeId) async {
-    final snapshot = await _collection
-        .where('storeId', isEqualTo: storeId)
-        .count()
-        .get();
+    final snapshot =
+        await _collection.where('storeId', isEqualTo: storeId).count().get();
     return snapshot.count ?? 0;
   }
 
   /// Search items by name.
   Future<List<InventoryItem>> searchItems(String storeId, String query) async {
-    final snapshot = await _collection
-        .where('storeId', isEqualTo: storeId)
-        .get();
+    final snapshot =
+        await _collection.where('storeId', isEqualTo: storeId).get();
 
     final lowerQuery = query.toLowerCase();
     return snapshot.docs
@@ -122,15 +124,31 @@ class InventoryRepository {
 
   /// Get all categories for a store.
   Future<List<String>> getCategories(String storeId) async {
-    final snapshot = await _collection
-        .where('storeId', isEqualTo: storeId)
-        .get();
+    final snapshot =
+        await _collection.where('storeId', isEqualTo: storeId).get();
 
-    final categories = snapshot.docs
-        .map((d) => d.data()['category'] as String)
-        .toSet()
-        .toList();
+    final categories =
+        snapshot.docs
+            .map((d) => d.data()['category'] as String)
+            .toSet()
+            .toList();
     categories.sort();
     return categories;
+  }
+
+  /// Get item by barcode for a specific store.
+  Future<InventoryItem?> getItemByBarcode(
+    String storeId,
+    String barcode,
+  ) async {
+    final snapshot =
+        await _collection
+            .where('storeId', isEqualTo: storeId)
+            .where('barcode', isEqualTo: barcode)
+            .limit(1)
+            .get();
+
+    if (snapshot.docs.isEmpty) return null;
+    return InventoryItem.fromMap(snapshot.docs.first.data());
   }
 }

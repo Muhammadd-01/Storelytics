@@ -24,13 +24,15 @@ class DemandListScreen extends ConsumerWidget {
       loading: () => const Scaffold(body: AppLoadingWidget()),
       error: (e, _) => Scaffold(body: AppErrorWidget(message: e.toString())),
       data: (user) {
-        if (user == null || user.storeId == null) {
+        if (user == null || user.currentStoreId == null) {
           return const Scaffold(
             body: EmptyStateWidget(icon: Icons.store, title: 'No store'),
           );
         }
 
-        final demandsAsync = ref.watch(demandStreamProvider(user.storeId!));
+        final demandsAsync = ref.watch(
+          demandStreamProvider(user.currentStoreId!),
+        );
 
         return Scaffold(
           appBar: AppBar(
@@ -42,7 +44,8 @@ class DemandListScreen extends ConsumerWidget {
           ),
           floatingActionButtonLocation: const RaisedFabLocation(),
           floatingActionButton: FloatingActionButton.extended(
-            onPressed: () => _showAddDemandDialog(context, ref, user.storeId!),
+            onPressed:
+                () => _showAddDemandDialog(context, ref, user.currentStoreId!),
             backgroundColor: AppColors.secondary,
             foregroundColor: Colors.white,
             icon: const Icon(Icons.add),

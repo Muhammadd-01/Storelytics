@@ -7,7 +7,8 @@ class UserModel {
   final String name;
   final String email;
   final UserRole role;
-  final String? storeId;
+  final String? currentStoreId;
+  final List<String> storeIds;
   final String? profileImageUrl;
   final String? phoneNumber;
   final SubscriptionPlan subscriptionPlan;
@@ -19,7 +20,8 @@ class UserModel {
     required this.name,
     required this.email,
     required this.role,
-    this.storeId,
+    this.currentStoreId,
+    this.storeIds = const [],
     this.profileImageUrl,
     this.phoneNumber,
     this.subscriptionPlan = SubscriptionPlan.free,
@@ -32,7 +34,8 @@ class UserModel {
     String? name,
     String? email,
     UserRole? role,
-    String? storeId,
+    String? currentStoreId,
+    List<String>? storeIds,
     String? profileImageUrl,
     String? phoneNumber,
     SubscriptionPlan? subscriptionPlan,
@@ -44,7 +47,8 @@ class UserModel {
       name: name ?? this.name,
       email: email ?? this.email,
       role: role ?? this.role,
-      storeId: storeId ?? this.storeId,
+      currentStoreId: currentStoreId ?? this.currentStoreId,
+      storeIds: storeIds ?? this.storeIds,
       profileImageUrl: profileImageUrl ?? this.profileImageUrl,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       subscriptionPlan: subscriptionPlan ?? this.subscriptionPlan,
@@ -59,7 +63,9 @@ class UserModel {
       'name': name,
       'email': email,
       'role': role.name,
-      'storeId': storeId,
+      'storeId': currentStoreId, // Keep for rules compatibility
+      'currentStoreId': currentStoreId,
+      'storeIds': storeIds,
       'profileImageUrl': profileImageUrl,
       'phoneNumber': phoneNumber,
       'subscriptionPlan': subscriptionPlan.name,
@@ -77,7 +83,8 @@ class UserModel {
         (e) => e.name == map['role'],
         orElse: () => UserRole.storeOwner,
       ),
-      storeId: map['storeId'] as String?,
+      currentStoreId: (map['currentStoreId'] ?? map['storeId']) as String?,
+      storeIds: List<String>.from(map['storeIds'] ?? []),
       profileImageUrl: map['profileImageUrl'] as String?,
       phoneNumber: map['phoneNumber'] as String?,
       subscriptionPlan: SubscriptionPlan.values.firstWhere(

@@ -11,8 +11,15 @@ final storeRepositoryProvider = Provider<StoreRepository>((ref) {
 // ── Current Store ──
 final currentStoreProvider = FutureProvider<StoreModel?>((ref) async {
   final user = await ref.watch(currentUserProvider.future);
-  if (user == null || user.storeId == null) return null;
-  return ref.read(storeRepositoryProvider).getStore(user.storeId!);
+  if (user == null || user.currentStoreId == null) return null;
+  return ref.read(storeRepositoryProvider).getStore(user.currentStoreId!);
+});
+
+// ── User's Stores ──
+final userStoresProvider = FutureProvider<List<StoreModel>>((ref) async {
+  final user = await ref.watch(currentUserProvider.future);
+  if (user == null) return [];
+  return ref.read(storeRepositoryProvider).getUserStores(user.uid);
 });
 
 // ── Store Stream ──

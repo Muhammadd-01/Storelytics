@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:storelytics/core/extensions.dart';
 import 'package:storelytics/features/auth/presentation/providers/auth_providers.dart';
 import 'package:storelytics/features/sales/presentation/providers/sales_providers.dart';
+import 'package:storelytics/features/store/presentation/providers/store_providers.dart';
+import 'package:storelytics/shared/services/receipt_service.dart';
 import 'package:storelytics/shared/widgets/common_widgets.dart';
 import 'package:storelytics/theme/app_colors.dart';
 
@@ -19,13 +21,13 @@ class SalesHistoryScreen extends ConsumerWidget {
       loading: () => const Scaffold(body: AppLoadingWidget()),
       error: (e, _) => Scaffold(body: AppErrorWidget(message: e.toString())),
       data: (user) {
-        if (user == null || user.storeId == null) {
+        if (user == null || user.currentStoreId == null) {
           return const Scaffold(
             body: EmptyStateWidget(icon: Icons.store, title: 'No store'),
           );
         }
 
-        final salesAsync = ref.watch(salesStreamProvider(user.storeId!));
+        final salesAsync = ref.watch(salesStreamProvider(user.currentStoreId!));
 
         return Scaffold(
           extendBodyBehindAppBar: true,
@@ -177,6 +179,25 @@ class SalesHistoryScreen extends ConsumerWidget {
                                         ),
                                       ),
                                     ],
+                                  ),
+                                  const SizedBox(width: 8),
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.receipt_long_rounded,
+                                      color: AppColors.secondary,
+                                      size: 20,
+                                    ),
+                                    onPressed: () async {
+                                      final store = await ref.read(
+                                        currentStoreProvider.future,
+                                      );
+                                      ReceiptService.generateAndPrintReceipt(
+                                        sale,
+                                        store?.storeName ??
+                                            'Storelytics Retail',
+                                      );
+                                    },
+                                    tooltip: 'Download Receipt',
                                   ),
                                 ],
                               ),

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -10,6 +11,7 @@ import 'package:storelytics/features/auth/presentation/providers/auth_providers.
 import 'package:storelytics/features/store/data/models/store_model.dart';
 import 'package:storelytics/features/store/presentation/providers/store_providers.dart';
 import 'package:storelytics/shared/services/storage_service.dart';
+import 'package:storelytics/shared/services/location_service.dart';
 import 'package:storelytics/shared/widgets/app_text_field.dart';
 import 'package:storelytics/theme/app_colors.dart';
 import 'package:storelytics/theme/app_spacing.dart';
@@ -52,6 +54,25 @@ class _StoreSetupScreenState extends ConsumerState<StoreSetupScreen> {
     }
   }
 
+  Future<void> _fetchLocation() async {
+    setState(() => _isLoading = true);
+    try {
+      final address = await LocationService.getCurrentAddress();
+      _addressController.text = address;
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString()),
+            backgroundColor: AppColors.loss,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
   @override
   void dispose() {
     _storeNameController.dispose();
@@ -70,29 +91,31 @@ class _StoreSetupScreenState extends ConsumerState<StoreSetupScreen> {
       final user = await ref.read(currentUserProvider.future);
       if (user == null) throw Exception('User not found');
 
+      if (_nicImage == null || _certificationImage == null) {
+        throw Exception(
+          'Please upload both NIC and Certification images for verification.',
+        );
+      }
+
       final storeId = const Uuid().v4();
       String? nicUrl;
       String? certUrl;
 
-      if (_nicImage != null) {
-        nicUrl = await ref
-            .read(storageServiceProvider)
-            .uploadStoreVerificationImage(
-              file: _nicImage!,
-              storeId: storeId,
-              type: 'nic',
-            );
-      }
+      nicUrl = await ref
+          .read(storageServiceProvider)
+          .uploadStoreVerificationImage(
+            file: _nicImage!,
+            storeId: storeId,
+            type: 'nic',
+          );
 
-      if (_certificationImage != null) {
-        certUrl = await ref
-            .read(storageServiceProvider)
-            .uploadStoreVerificationImage(
-              file: _certificationImage!,
-              storeId: storeId,
-              type: 'certification',
-            );
-      }
+      certUrl = await ref
+          .read(storageServiceProvider)
+          .uploadStoreVerificationImage(
+            file: _certificationImage!,
+            storeId: storeId,
+            type: 'certification',
+          );
 
       final store = StoreModel(
         storeId: storeId,
@@ -307,6 +330,15 @@ class _StoreSetupScreenState extends ConsumerState<StoreSetupScreen> {
                         Icons.location_on_outlined,
                         size: 20,
                       ),
+                      suffixIcon: IconButton(
+                        icon: const Icon(
+                          Icons.my_location_rounded,
+                          color: AppColors.secondary,
+                          size: 20,
+                        ),
+                        onPressed: _fetchLocation,
+                        tooltip: 'Fetch Current Location',
+                      ),
                       validator: (v) => Validators.required(v, 'Address'),
                     ),
                     const SizedBox(height: AppSpacing.lg),
@@ -433,7 +465,9 @@ class _StoreSetupScreenState extends ConsumerState<StoreSetupScreen> {
                       child: Stack(
                         fit: StackFit.expand,
                         children: [
-                          Image.file(File(image.path), fit: BoxFit.cover),
+                          kIsWeb
+                              ? Image.network(image.path, fit: BoxFit.cover)
+                              : Image.file(File(image.path), fit: BoxFit.cover),
                           Container(
                             color: Colors.black26,
                             child: const Center(

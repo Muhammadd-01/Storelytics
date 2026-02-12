@@ -22,59 +22,80 @@ import 'package:storelytics/features/store/presentation/screens/store_setup_scre
 import 'package:storelytics/features/admin/presentation/screens/admin_dashboard_screen.dart';
 import 'package:storelytics/shared/widgets/main_shell.dart';
 
+import 'package:storelytics/features/auth/presentation/screens/splash_screen.dart';
+import 'package:storelytics/features/auth/presentation/screens/onboarding_screen.dart';
+import 'package:storelytics/features/auth/data/repositories/onboarding_repository.dart';
+import 'package:storelytics/features/notifications/presentation/screens/notification_screen.dart';
+
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
   final userModelAsync = ref.watch(currentUserProvider);
+  final onboardingCompleted = ref.watch(onboardingCompletedProvider);
 
   return GoRouter(
-    initialLocation: '/',
+    initialLocation: '/splash',
     debugLogDiagnostics: true,
     redirect: (context, state) {
       final isLoggingIn = state.uri.toString() == '/login';
       final isSigningUp = state.uri.toString() == '/signup';
       final isForgotPassword = state.uri.toString() == '/forgot-password';
+      final isSplash = state.uri.toString() == '/splash';
+      final isOnboarding = state.uri.toString() == '/onboarding';
       final isAuthRoute = isLoggingIn || isSigningUp || isForgotPassword;
 
-      return authState.when(
-        data: (user) {
-          if (user == null) {
-            // Not logged in — redirect to login if not already on an auth route
-            return isAuthRoute ? null : '/login';
+      if (isSplash) return null;
+
+      // Wait for auth initialization
+      if (authState.isLoading) return null;
+
+      final user = authState.value;
+
+      // Handle onboarding logic for new users
+      if (!onboardingCompleted && !isOnboarding && user == null) {
+        return '/onboarding';
+      }
+
+      // Unauthenticated state
+      if (user == null) {
+        if (isOnboarding || isAuthRoute) return null;
+        return '/login';
+      }
+
+      // Logged in — Already onboarding and finished? go home
+      if (isOnboarding && onboardingCompleted) return '/';
+
+      // Wait for user model to load
+      if (userModelAsync.isLoading) return null;
+
+      return userModelAsync.maybeWhen(
+        data: (userModel) {
+          if (userModel == null) return null;
+
+          final hasStore = userModel.currentStoreId != null;
+          final isStoreSetup = state.uri.toString() == '/store-setup';
+          final isVerification = state.uri.toString() == '/email-verification';
+
+          // If no store and not on setup/verification page, go to setup
+          if (!hasStore && !isStoreSetup && !isVerification) {
+            return '/store-setup';
           }
 
-          // Logged in — check for store configuration
-          return userModelAsync.maybeWhen(
-            data: (userModel) {
-              if (userModel == null) return null;
-
-              final hasStore = userModel.storeId != null;
-              final isStoreSetup = state.uri.toString() == '/store-setup';
-              final isVerification =
-                  state.uri.toString() == '/email-verification';
-
-              // If no store and not on setup/verification page, go to setup
-              if (!hasStore && !isStoreSetup && !isVerification) {
-                return '/store-setup';
-              }
-              // If has store and on setup page, go to home
-              if (hasStore && isStoreSetup) {
-                return '/';
-              }
-
-              // If logged in and on auth route, go home
-              if (isAuthRoute) {
-                return '/';
-              }
-              return null;
-            },
-            orElse: () => null,
-          );
+          // If logged in and on auth route, go home
+          if (isAuthRoute) {
+            return '/';
+          }
+          return null;
         },
-        loading: () => null,
-        error: (_, __) => isAuthRoute ? null : '/login',
+        orElse: () => null,
       );
     },
     routes: [
+      GoRoute(path: '/splash', builder: (_, __) => const SplashScreen()),
+      GoRoute(
+        path: '/onboarding',
+        builder: (_, __) => const OnboardingScreen(),
+      ),
+
       // Auth Routes
       GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
       GoRoute(path: '/signup', builder: (_, __) => const SignupScreen()),
@@ -163,6 +184,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/sales/record',
         builder: (_, __) => const RecordSaleScreen(),
+      ),
+      GoRoute(
+        path: '/notifications',
+        builder: (_, __) => const NotificationScreen(),
       ),
       GoRoute(path: '/admin', builder: (_, __) => const AdminDashboardScreen()),
       GoRoute(

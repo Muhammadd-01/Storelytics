@@ -8,6 +8,7 @@ import 'package:storelytics/features/auth/presentation/providers/auth_providers.
 import 'package:storelytics/features/inventory/presentation/providers/inventory_providers.dart';
 import 'package:storelytics/features/sales/presentation/providers/sales_providers.dart';
 import 'package:storelytics/features/store/presentation/providers/store_providers.dart';
+import 'package:storelytics/features/notifications/data/repositories/notification_repository.dart';
 import 'package:storelytics/shared/widgets/common_widgets.dart';
 import 'package:storelytics/theme/app_colors.dart';
 
@@ -27,11 +28,11 @@ class DashboardScreen extends ConsumerWidget {
       error: (e, _) => Scaffold(body: AppErrorWidget(message: e.toString())),
       data: (user) {
         if (user == null) return const SizedBox.shrink();
-        final storeId = user.storeId ?? '';
+        final storeId = user.currentStoreId ?? '';
 
         return Scaffold(
           extendBodyBehindAppBar: true,
-          appBar: _buildAppBar(context, storeAsync),
+          appBar: _buildAppBar(context, ref, storeAsync),
           body:
               storeId.isEmpty
                   ? const EmptyStateWidget(
@@ -117,47 +118,95 @@ class DashboardScreen extends ConsumerWidget {
 
   PreferredSizeWidget _buildAppBar(
     BuildContext context,
+    WidgetRef ref,
     AsyncValue storeAsync,
   ) {
     return AppBar(
       backgroundColor: Colors.transparent,
       elevation: 0,
-      title: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Image.asset(
-            'assets/images/logo.png',
-            height: 24,
-            errorBuilder:
-                (_, __, ___) => const Icon(
-                  Icons.analytics_rounded,
-                  color: Colors.white,
-                  size: 24,
-                ),
-          ),
-          storeAsync.maybeWhen(
-            data:
-                (store) => Text(
+      title: storeAsync.maybeWhen(
+        data:
+            (store) => Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
                   store?.storeName.toUpperCase() ?? 'MY STORE',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    letterSpacing: 1,
+                  ),
+                ),
+                Text(
+                  'OPERATIONAL INTELLIGENCE',
                   style: TextStyle(
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
                     color: Colors.white.withValues(alpha: 0.5),
-                    letterSpacing: 0.5,
+                    letterSpacing: 2,
                   ),
                 ),
-            orElse: () => const SizedBox.shrink(),
-          ),
-        ],
+              ],
+            ),
+        orElse:
+            () => const Text(
+              'STORELYTICS',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+                letterSpacing: 1,
+              ),
+            ),
       ),
       actions: [
-        Padding(
-          padding: const EdgeInsets.only(right: 16),
-          child: IconButton(
-            icon: const Icon(Icons.hub_rounded, color: Colors.white, size: 22),
-            onPressed: () {},
+        _buildNotificationButton(context, ref, storeAsync.value?.storeId),
+        const SizedBox(width: 8),
+      ],
+    );
+  }
+
+  Widget _buildNotificationButton(
+    BuildContext context,
+    WidgetRef ref,
+    String? storeId,
+  ) {
+    if (storeId == null) return const SizedBox();
+
+    final unreadCount = ref.watch(unreadNotificationsCountProvider(storeId));
+
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        IconButton(
+          icon: const Icon(
+            Icons.notifications_outlined,
+            color: Colors.white,
+            size: 22,
           ),
+          onPressed: () => context.push('/notifications'),
         ),
+        if (unreadCount > 0)
+          Positioned(
+            right: 8,
+            top: 14,
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: const BoxDecoration(
+                color: AppColors.secondary,
+                shape: BoxShape.circle,
+              ),
+              child: Text(
+                unreadCount > 9 ? '9+' : '$unreadCount',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 7,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
       ],
     );
   }

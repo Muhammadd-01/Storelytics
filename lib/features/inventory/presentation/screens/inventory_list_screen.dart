@@ -20,13 +20,13 @@ class InventoryListScreen extends ConsumerWidget {
       loading: () => const Scaffold(body: AppLoadingWidget()),
       error: (e, _) => Scaffold(body: AppErrorWidget(message: e.toString())),
       data: (user) {
-        if (user == null || user.storeId == null) {
+        if (user == null || user.currentStoreId == null) {
           return const Scaffold(
             body: EmptyStateWidget(icon: Icons.store, title: 'No store'),
           );
         }
 
-        final storeId = user.storeId!;
+        final storeId = user.currentStoreId!;
         final selectedCategory = ref.watch(selectedCategoryProvider);
         final searchQuery = ref.watch(inventorySearchQueryProvider);
 

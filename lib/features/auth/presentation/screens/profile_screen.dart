@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:storelytics/features/auth/presentation/providers/auth_providers.dart';
 import 'package:storelytics/features/auth/data/models/user_model.dart';
+import 'package:storelytics/features/store/presentation/providers/store_providers.dart';
 import 'package:storelytics/core/enums.dart';
 import 'package:storelytics/theme/app_colors.dart';
 import 'package:storelytics/shared/widgets/common_widgets.dart';
@@ -130,22 +131,42 @@ class ProfileScreen extends ConsumerWidget {
 
                       const SizedBox(height: 40),
 
-                      // Account Parameters
-                      _ParameterCard(
-                        icon: Icons.fingerprint_rounded,
-                        label: 'STORE ID',
-                        value: user.storeId ?? 'NOT LINKED',
-                        isDark: isDark,
+                      // Store Management
+                      Text(
+                        'STORE MANAGEMENT',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                          color: isDark ? Colors.white38 : Colors.black38,
+                          letterSpacing: 2,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      _ActionButton(
+                        onPressed: () => _showStoreSwitcher(context, ref, user),
+                        icon: Icons.sync_rounded,
+                        label: 'SWITCH STORE',
+                        isPrimary: true,
                       ),
                       const SizedBox(height: 12),
-                      _ParameterCard(
-                        icon: Icons.workspace_premium_rounded,
-                        label: 'MEMBERSHIP',
-                        value: user.subscriptionPlan.label.toUpperCase(),
-                        isDark: isDark,
+                      _ActionButton(
+                        onPressed: () => context.push('/store-setup'),
+                        icon: Icons.add_business_rounded,
+                        label: 'ADD NEW STORE',
+                        isPrimary: false,
                       ),
 
-                      const SizedBox(height: 48),
+                      const SizedBox(height: 32),
+                      Text(
+                        'ACCOUNT SETTINGS',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                          color: isDark ? Colors.white38 : Colors.black38,
+                          letterSpacing: 2,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
 
                       _ActionButton(
                         onPressed: () => context.push('/edit-profile'),
@@ -184,6 +205,113 @@ class ProfileScreen extends ConsumerWidget {
           ),
         );
       },
+    );
+  }
+
+  void _showStoreSwitcher(BuildContext context, WidgetRef ref, UserModel user) {
+    showModalBottomSheet(
+      context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder:
+          (context) => Container(
+            margin: EdgeInsets.only(
+              top: MediaQuery.of(context).padding.top + 60,
+            ),
+            decoration: BoxDecoration(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(30),
+              ),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Switch Active Store',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Select which store you want to manage right now.',
+                  style: TextStyle(color: Colors.grey, fontSize: 13),
+                ),
+                const SizedBox(height: 24),
+                ref
+                    .watch(userStoresProvider)
+                    .when(
+                      loading: () => const Center(child: AppLoadingWidget()),
+                      error: (e, _) => Center(child: Text(e.toString())),
+                      data: (stores) {
+                        if (stores.isEmpty) {
+                          return const Center(child: Text('No stores found'));
+                        }
+                        return Flexible(
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            itemCount: stores.length,
+                            itemBuilder: (context, index) {
+                              final store = stores[index];
+                              final isCurrent =
+                                  store.storeId == user.currentStoreId;
+                              return ListTile(
+                                leading: CircleAvatar(
+                                  backgroundColor:
+                                      isCurrent
+                                          ? AppColors.secondary
+                                          : Colors.grey.withValues(alpha: 0.1),
+                                  child: Icon(
+                                    Icons.store_rounded,
+                                    color:
+                                        isCurrent ? Colors.white : Colors.grey,
+                                    size: 20,
+                                  ),
+                                ),
+                                title: Text(
+                                  store.storeName,
+                                  style: TextStyle(
+                                    fontWeight:
+                                        isCurrent
+                                            ? FontWeight.bold
+                                            : FontWeight.normal,
+                                  ),
+                                ),
+                                subtitle: Text(
+                                  store.storeType.label,
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                                trailing:
+                                    isCurrent
+                                        ? const Icon(
+                                          Icons.check_circle_rounded,
+                                          color: AppColors.secondary,
+                                        )
+                                        : null,
+                                onTap: () async {
+                                  if (!isCurrent) {
+                                    final updatedUser = user.copyWith(
+                                      currentStoreId: store.storeId,
+                                    );
+                                    await ref
+                                        .read(authRepositoryProvider)
+                                        .updateUser(updatedUser);
+                                    ref.invalidate(currentUserProvider);
+                                    ref.invalidate(currentStoreProvider);
+                                  }
+                                  Navigator.pop(context);
+                                },
+                              );
+                            },
+                          ),
+                        );
+                      },
+                    ),
+              ],
+            ),
+          ),
     );
   }
 
@@ -241,72 +369,6 @@ class _Badge extends StatelessWidget {
           color: color,
           letterSpacing: 0.5,
         ),
-      ),
-    );
-  }
-}
-
-class _ParameterCard extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final bool isDark;
-
-  const _ParameterCard({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.isDark,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.05),
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppColors.secondary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(icon, color: AppColors.secondary, size: 20),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.grey,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

@@ -15,7 +15,7 @@ service cloud.firestore {
       return isSignedIn() && getUserData().role == 'admin';
     }
     function isStoreOwner(storeId) {
-      return isSignedIn() && getUserData().storeId == storeId;
+      return isSignedIn() && (getUserData().currentStoreId == storeId || storeId in getUserData().storeIds);
     }
     // ── Users Collection ──
     match /users/{userId} {
@@ -59,6 +59,13 @@ service cloud.firestore {
       allow read: if isSignedIn() && (isStoreOwner(resource.data.storeId) || isAdmin());
       allow create: if isSignedIn() && isStoreOwner(request.resource.data.storeId);
       allow update: if isSignedIn() && isStoreOwner(resource.data.storeId);
+      allow delete: if isSignedIn() && (isStoreOwner(resource.data.storeId) || isAdmin());
+    }
+    // ── Notifications Collection ──
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn() && (isStoreOwner(resource.data.storeId) || isAdmin());
+      allow create: if isSignedIn() && isStoreOwner(request.resource.data.storeId);
+      allow update: if isSignedIn() && (isStoreOwner(resource.data.storeId) || isAdmin());
       allow delete: if isSignedIn() && (isStoreOwner(resource.data.storeId) || isAdmin());
     }
     // ── Deny everything else ──

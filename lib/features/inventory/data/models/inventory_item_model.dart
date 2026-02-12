@@ -14,6 +14,7 @@ class InventoryItem {
   final String supplierName;
   final String? barcode;
   final String? imageUrl;
+  final String? barcodeImageUrl;
   final DateTime createdAt;
 
   const InventoryItem({
@@ -29,6 +30,7 @@ class InventoryItem {
     required this.supplierName,
     this.barcode,
     this.imageUrl,
+    this.barcodeImageUrl,
     required this.createdAt,
   });
 
@@ -77,6 +79,7 @@ class InventoryItem {
     String? supplierName,
     String? barcode,
     String? imageUrl,
+    String? barcodeImageUrl,
     DateTime? createdAt,
   }) {
     return InventoryItem(
@@ -92,6 +95,7 @@ class InventoryItem {
       supplierName: supplierName ?? this.supplierName,
       barcode: barcode ?? this.barcode,
       imageUrl: imageUrl ?? this.imageUrl,
+      barcodeImageUrl: barcodeImageUrl ?? this.barcodeImageUrl,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -100,6 +104,7 @@ class InventoryItem {
     return {
       'itemId': itemId,
       'storeId': storeId,
+      'currentStoreId': storeId, // Added for cross-compatibility
       'name': name,
       'category': category,
       'purchasePrice': purchasePrice,
@@ -110,6 +115,7 @@ class InventoryItem {
       'supplierName': supplierName,
       'barcode': barcode,
       'imageUrl': imageUrl,
+      'barcodeImageUrl': barcodeImageUrl,
       'createdAt': Timestamp.fromDate(createdAt),
     };
   }
@@ -117,7 +123,7 @@ class InventoryItem {
   factory InventoryItem.fromMap(Map<String, dynamic> map) {
     return InventoryItem(
       itemId: map['itemId'] as String,
-      storeId: map['storeId'] as String,
+      storeId: (map['storeId'] ?? map['currentStoreId']) as String,
       name: map['name'] as String,
       category: map['category'] as String,
       purchasePrice: (map['purchasePrice'] as num).toDouble(),
@@ -131,6 +137,7 @@ class InventoryItem {
       supplierName: map['supplierName'] as String,
       barcode: map['barcode'] as String?,
       imageUrl: map['imageUrl'] as String?,
+      barcodeImageUrl: map['barcodeImageUrl'] as String?,
       createdAt: (map['createdAt'] as Timestamp).toDate(),
     );
   }

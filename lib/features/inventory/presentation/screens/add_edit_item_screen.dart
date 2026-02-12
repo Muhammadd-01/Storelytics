@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
+import 'package:storelytics/shared/widgets/barcode_scanner_screen.dart';
 import 'package:storelytics/core/validators.dart';
 import 'package:storelytics/features/auth/presentation/providers/auth_providers.dart';
 import 'package:storelytics/features/inventory/data/models/inventory_item_model.dart';
@@ -34,6 +35,7 @@ class _AddEditItemScreenState extends ConsumerState<AddEditItemScreen> {
   late final TextEditingController _barcodeController;
   DateTime? _expiryDate;
   XFile? _image;
+  XFile? _barcodeImage;
   bool _isLoading = false;
 
   bool get _isEditing => widget.item != null;
@@ -84,6 +86,49 @@ class _AddEditItemScreenState extends ConsumerState<AddEditItemScreen> {
     if (image != null) setState(() => _image = image);
   }
 
+  Future<void> _pickBarcodeImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 70,
+    );
+    if (image != null) setState(() => _barcodeImage = image);
+  }
+
+  Future<void> _scanBarcode() async {
+    final code = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(builder: (context) => const BarcodeScannerScreen()),
+    );
+
+    if (code != null) {
+      _barcodeController.text = code;
+      _fetchByBarcode(code);
+    }
+  }
+
+  Future<void> _fetchByBarcode(String barcode) async {
+    setState(() => _isLoading = true);
+    try {
+      final user = ref.read(currentUserProvider).value;
+      if (user?.currentStoreId == null) return;
+
+      final repo = ref.read(inventoryRepositoryProvider);
+      final item = await repo.getItemByBarcode(user!.currentStoreId!, barcode);
+
+      if (item != null) {
+        _nameController.text = item.name;
+        _categoryController.text = item.category;
+        _purchasePriceController.text = item.purchasePrice.toString();
+        _sellingPriceController.text = item.sellingPrice.toString();
+        _supplierController.text = item.supplierName;
+        _expiryDate = item.expiryDate;
+      }
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
   Future<void> _pickExpiryDate() async {
     final picked = await showDatePicker(
       context: context,
@@ -100,7 +145,7 @@ class _AddEditItemScreenState extends ConsumerState<AddEditItemScreen> {
 
     try {
       final user = await ref.read(currentUserProvider.future);
-      if (user == null || user.storeId == null)
+      if (user == null || user.currentStoreId == null)
         throw Exception('Identity validation failed');
 
       final repo = ref.read(inventoryRepositoryProvider);
@@ -110,13 +155,21 @@ class _AddEditItemScreenState extends ConsumerState<AddEditItemScreen> {
       if (_image != null) {
         imageUrl = await storage.uploadItemImage(
           file: _image!,
-          storeId: user.storeId!,
+          storeId: user.currentStoreId!,
+        );
+      }
+
+      String? barcodeImageUrl = widget.item?.barcodeImageUrl;
+      if (_barcodeImage != null) {
+        barcodeImageUrl = await storage.uploadBarcodeImage(
+          file: _barcodeImage!,
+          storeId: user.currentStoreId!,
         );
       }
 
       final item = InventoryItem(
         itemId: widget.item?.itemId ?? const Uuid().v4(),
-        storeId: user.storeId!,
+        storeId: user.currentStoreId!,
         name: _nameController.text.trim(),
         category: _categoryController.text.trim(),
         purchasePrice: double.parse(_purchasePriceController.text.trim()),
@@ -130,6 +183,7 @@ class _AddEditItemScreenState extends ConsumerState<AddEditItemScreen> {
                 ? null
                 : _barcodeController.text.trim(),
         imageUrl: imageUrl,
+        barcodeImageUrl: barcodeImageUrl,
         createdAt: widget.item?.createdAt ?? DateTime.now(),
       );
 
@@ -271,11 +325,16 @@ class _AddEditItemScreenState extends ConsumerState<AddEditItemScreen> {
                 controller: _barcodeController,
                 label: 'BARCODE SYSTEM (OPTIONAL)',
                 hint: 'Scan or input manually',
-                prefixIcon: const Icon(
-                  Icons.qr_code_scanner_rounded,
-                  color: AppColors.secondary,
+                prefixIcon: IconButton(
+                  icon: const Icon(
+                    Icons.qr_code_scanner_rounded,
+                    color: AppColors.secondary,
+                  ),
+                  onPressed: _scanBarcode,
                 ),
               ),
+              const SizedBox(height: 16),
+              _buildBarcodeImageUploader(isDark),
 
               const SizedBox(height: 60),
               _buildSubmitButton(),
@@ -476,6 +535,64 @@ class _AddEditItemScreenState extends ConsumerState<AddEditItemScreen> {
                   ),
                 ),
       ),
+    );
+  }
+
+  Widget _buildBarcodeImageUploader(bool isDark) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'BARCODE PHOTO',
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w900,
+            color: AppColors.secondary,
+            letterSpacing: 1.2,
+          ),
+        ),
+        const SizedBox(height: 12),
+        GestureDetector(
+          onTap: _pickBarcodeImage,
+          child: Container(
+            height: 120,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: AppColors.secondary.withValues(alpha: 0.1),
+                width: 2,
+              ),
+              image:
+                  _barcodeImage != null
+                      ? DecorationImage(
+                        image:
+                            kIsWeb
+                                ? NetworkImage(_barcodeImage!.path)
+                                : FileImage(File(_barcodeImage!.path))
+                                    as ImageProvider,
+                        fit: BoxFit.cover,
+                      )
+                      : (widget.item?.barcodeImageUrl != null
+                          ? DecorationImage(
+                            image: NetworkImage(widget.item!.barcodeImageUrl!),
+                            fit: BoxFit.cover,
+                          )
+                          : null),
+            ),
+            child:
+                _barcodeImage == null && widget.item?.barcodeImageUrl == null
+                    ? const Center(
+                      child: Icon(
+                        Icons.add_a_photo_outlined,
+                        color: AppColors.secondary,
+                      ),
+                    )
+                    : null,
+          ),
+        ),
+      ],
     );
   }
 }

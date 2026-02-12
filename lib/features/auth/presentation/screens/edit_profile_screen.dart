@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -180,7 +181,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                                 ),
                                 backgroundImage:
                                     _pickedImage != null
-                                        ? FileImage(io.File(_pickedImage!.path))
+                                        ? (kIsWeb
+                                            ? NetworkImage(_pickedImage!.path)
+                                            : FileImage(
+                                                  io.File(_pickedImage!.path),
+                                                )
+                                                as ImageProvider)
                                         : (ref
                                                         .read(
                                                           currentUserProvider,
